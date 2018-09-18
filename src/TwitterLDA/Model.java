@@ -1,28 +1,16 @@
 package TwitterLDA;
 
-import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
-import java.io.FileReader;
 import java.io.FileWriter;
-import java.io.IOException;
-import java.io.InputStreamReader;
-import java.io.OutputStreamWriter;
-import java.io.PrintWriter;
+import java.util.ArrayDeque;
 import java.util.ArrayList;
-import java.util.Collections;
+import java.util.Collection;
+import java.util.Deque;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.Iterator;
-import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.StringTokenizer;
-import java.util.Vector;
-import java.lang.Object;
 
 import Common.ComUtil;
 import Common.FileUtil;
@@ -61,7 +49,12 @@ public class Model {
 
 	public int[] countAllWord; // # of words which are general topic a
 
+	public int totalWords;
+
 	// public int[][] CountTopicsTime;
+
+	public static final int ppl_count = 10;
+	public static final double ppl_maxvar = 0.5;
 
 	public Model(int A_all, int t, int u, int v, int niter, float alpha_g,
 			float beta, float beta_b, float gamm) {
@@ -214,6 +207,8 @@ public class Model {
 		int u, d, w = 0;
 		// int t = 0;
 
+		totalWords = 0;
+
 		z = new short[users.size()][];
 		x = new boolean[users.size()][][];
 
@@ -233,6 +228,8 @@ public class Model {
 				tweet tw = buffer_user.tweets.get(d);
 				x[u][d] = new boolean[tw.tweetwords.length];
 				// iterX[u][d] = new boolean[tw.tweetwords.length][40];
+
+				totalWords += tw.tweetwords.length;
 
 				double randgeneral = Math.random();
 				double thred = 0;
@@ -272,10 +269,51 @@ public class Model {
 		System.out.println("Intialize Done");
 	}
 
+	public double calculatePerplexity(ArrayList<user> users) {
+		double perplexity = 0.0;
+
+		// user based rather than doc based
+		for (int u = 0; u < U; ++u) {
+			for (tweet tw: users.get(u).tweets) {
+				for (int word: tw.tweetwords) {
+					double temp = 0.0;
+					for (int a = 0; a < A; ++a)
+						temp += theta_general[u][a] * phi_word[a][word];
+					perplexity += Math.log(temp);
+				}
+			}
+		}
+
+		return Math.exp(-(perplexity / totalWords));
+	}
+
+	public double calculateVariance(Collection<Double> array) {
+		if (array.size() < 2)
+			return 0.0;
+
+		double avg = 0;
+
+		for (Double x: array)
+			avg += x;
+
+		avg /= array.size();
+
+		double variance = 0.0;
+
+		for (Double x: array)
+			variance += (x - avg) * (x - avg);
+
+		variance /= array.size();
+		return variance;
+	}
+
 	public void estimate(ArrayList<user> users, int nIter) {
 
 		int niter = 0;
 		// int step = 0;
+
+		Deque<Double> ppl = new ArrayDeque<Double>();
+
 		while (true) {
 			niter++;
 			System.out.println("iteration" + " " + niter + " ...");
@@ -290,8 +328,24 @@ public class Model {
 			// System.out.println("record matrix done");
 			// }
 
+			update_distribution();
+
+			double perplexity = calculatePerplexity(users);
+			System.out.println(String.format("Perplexity is %.2f", perplexity));
+
+			ppl.addLast(new Double(perplexity));
+
+			if (ppl.size() <= ppl_count)
+				continue;
+
+			ppl.removeFirst();
+			if (calculateVariance(ppl) < ppl_maxvar) {
+				System.out.println("Perplexity convergence detected, terminating training...");
+				break;
+			}
+
 			if (niter >= nIter) {
-				update_distribution();
+				// update_distribution();
 				break;
 			}
 		}

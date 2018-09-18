@@ -1,5 +1,8 @@
 Twitter-LDA
 ===========
+
+> This is a modified version which calculates and prints perplexity, and automatically stops iteration based on perplexity convergence. Also, outputting texts with label is disabled for performance issues.
+
 /*
  * Copyright (C) 2012 by
  *

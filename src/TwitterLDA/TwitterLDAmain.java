@@ -1,24 +1,24 @@
 /*
  * Copyright (C) 2012 by
- * 
+ *
  * 	SMU Text Mining Group
  *	Singapore Management University
  *
  * TwitterLDA is distributed for research purpose, but
  * WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
- * 
+ *
  * The original paper is as follows:
- * Wayne Xin Zhao, Jing Jiang et al., Comparing Twitter and traditional media using topic models. 
+ * Wayne Xin Zhao, Jing Jiang et al., Comparing Twitter and traditional media using topic models.
  * ECIR'11.
- * 
+ *
  * Note that the package here is not developed by the authors
  * in the paper, nor used in the original papers. It's an implementation
  * based on the paper, where most of the work is done by qiming.diao.2010@smu.sg.
- * 
+ *
  * Feel free to contact the following people if you find any
  * problems in the package.
- * 
+ *
  * minghui.qiu.2010@smu.edu.sg
  *
  */
@@ -47,7 +47,7 @@ public class TwitterLDAmain {
 		String outputDir = base + "/ModelRes/" + name + "/";
 		String modelParas = base + "/modelParameters-" + name + ".txt";
 		String stopfile = base + "/stoplist.txt";
-		
+
 		// create output folder
 		FileUtil.mkdir(new File(base + "/ModelRes/"));
 		FileUtil.mkdir(new File(outputDir));
@@ -64,7 +64,7 @@ public class TwitterLDAmain {
 		float beta_b = Float.parseFloat(modelSettings.get(3));
 		float gamma = Float.parseFloat(modelSettings.get(4));
 		int nIter = Integer.parseInt(modelSettings.get(5));
-		System.err.println("Topics:" + A_all + ", alpha_g:" + alpha_g
+		System.out.println("Topics:" + A_all + ", alpha_g:" + alpha_g
 				+ ", beta_word:" + beta_word + ", beta_b:" + beta_b
 				+ ", gamma:" + gamma + ", iteration:" + nIter);
 		modelSettings.clear();
@@ -82,7 +82,7 @@ public class TwitterLDAmain {
 		if (!new File(outputTextWithLabel).exists())
 			FileUtil.mkdir(new File(outputTextWithLabel));
 
-		
+
 		// 2. get documents (users)
 		HashMap<String, Integer> wordMap = new HashMap<String, Integer>();
 		ArrayList<user> users = new ArrayList<user>();
@@ -124,12 +124,14 @@ public class TwitterLDAmain {
 		System.out.println("read uniwordmap");
 		FileUtil.readLines(outputDir + "uniWordMap.txt", uniWordMap);
 
-		try {
-			model.outputTextWithLabel(outputTextWithLabel, users, uniWordMap);
-		} catch (Exception e) {
-			e.printStackTrace();
-		}
-		System.out.println("write text with labels done");
+		// Do not output texts with label as we don't need them.
+		// try {
+		// 	model.outputTextWithLabel(outputTextWithLabel, users, uniWordMap);
+		// } catch (Exception e) {
+		// 	e.printStackTrace();
+		// }
+		// System.out.println("write text with labels done");
+
 		// model.outputTopicCountOnTime(outputTopicsCountOnTime);
 		users.clear();
 
